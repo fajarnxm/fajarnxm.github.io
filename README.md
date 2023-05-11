@@ -1,2 +1,2 @@
-# myblog
-My Personal Blog
+# mywebsite
+My Personal Website using Bootstrap.
