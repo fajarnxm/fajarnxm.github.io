@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Splitter - Indonesian Rupiah</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 2.2em;
+            font-weight: 700;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 1.1em;
+            transition: border-color 0.3s ease;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .tax-options {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .tax-btn {
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            background: white;
+            font-size: 1em;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .tax-btn:hover {
+            background: #f8f9fa;
+            border-color: #667eea;
+        }
+        
+        .tax-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .custom-tax {
+            margin-top: 10px;
+        }
+        
+        .people-count {
+            margin-bottom: 30px;
+        }
+        
+        .results {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 20px;
+        }
+        
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .result-label {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .result-value {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .total-per-person {
+            color: #667eea;
+            font-size: 1.5em;
+        }
+        
+        .reset-btn {
+            width: 100%;
+            padding: 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+        
+        .reset-btn:hover {
+            background: #5a6fd8;
+        }
+        
+        .reset-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-size: 0.9em;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .tax-options {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Split the Bill</h1>
+        
+        <div class="input-group">
+            <label for="bill">Bill Total (Rp)</label>
+            <input type="number" id="bill" placeholder="0" min="0" step="100">
+            <div class="error" id="bill-error">Can't be zero</div>
+        </div>
+        
+        <div class="input-group">
+            <label>Select Tax (%)</label>
+            <div class="tax-options">
+                <button class="tax-btn" data-tax="5">5%</button>
+                <button class="tax-btn" data-tax="10">10%</button>
+                <button class="tax-btn" data-tax="11">11%</button>
+                <button class="tax-btn" data-tax="15">15%</button>
+                <button class="tax-btn" data-tax="20">20%</button>
+                <input type="number" id="custom-tax" class="tax-btn" placeholder="Custom" min="0">
+            </div>
+        </div>
+        
+        <div class="input-group people-count">
+            <label for="people">Number of People</label>
+            <input type="number" id="people" placeholder="0" min="1">
+            <div class="error" id="people-error">Can't be zero</div>
+        </div>
+        
+        <div class="results">
+            <div class="result-row">
+                <span class="result-label">Tax Amount</span>
+                <span class="result-value" id="tax-amount">Rp 0</span>
+            </div>
+            <div class="result-row">
+                <span class="result-label">Total per Person</span>
+                <span class="result-value total-per-person" id="total-per-person">Rp 0</span>
+            </div>
+        </div>
+        
+        <button class="reset-btn" id="reset-btn" disabled>RESET</button>
+    </div>
+
+    <script>
+        // Get DOM elements
+        const billInput = document.getElementById('bill');
+        const peopleInput = document.getElementById('people');
+        const customTaxInput = document.getElementById('custom-tax');
+        const taxButtons = document.querySelectorAll('.tax-btn[data-tax]');
+        const taxAmountElement = document.getElementById('tax-amount');
+        const totalPerPersonElement = document.getElementById('total-per-person');
+        const resetButton = document.getElementById('reset-btn');
+        const billError = document.getElementById('bill-error');
+        const peopleError = document.getElementById('people-error');
+        
+        let selectedTax = 0;
+        
+        // Add event listeners to tax buttons
+        taxButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove active class from all buttons
+                taxButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                button.classList.add('active');
+                // Set selected tax
+                selectedTax = parseInt(button.dataset.tax);
+                customTaxInput.value = '';
+                calculateResults();
+            });
+        });
+        
+        // Custom tax input event
+        customTaxInput.addEventListener('input', () => {
+            // Remove active class from all tax buttons
+            taxButtons.forEach(btn => btn.classList.remove('active'));
+            if (customTaxInput.value) {
+                selectedTax = parseFloat(customTaxInput.value);
+            } else {
+                selectedTax = 0;
+            }
+            calculateResults();
+        });
+        
+        // Bill input event
+        billInput.addEventListener('input', () => {
+            validateBill();
+            calculateResults();
+        });
+        
+        // People input event
+        peopleInput.addEventListener('input', () => {
+            validatePeople();
+            calculateResults();
+        });
+        
+        // Reset button event
+        resetButton.addEventListener('click', () => {
+            billInput.value = '';
+            peopleInput.value = '';
+            customTaxInput.value = '';
+            taxButtons.forEach(btn => btn.classList.remove('active'));
+            selectedTax = 0;
+            taxAmountElement.textContent = 'Rp 0';
+            totalPerPersonElement.textContent = 'Rp 0';
+            resetButton.disabled = true;
+            billError.style.display = 'none';
+            peopleError.style.display = 'none';
+        });
+        
+        // Validation functions
+        function validateBill() {
+            if (billInput.value === '' || parseFloat(billInput.value) <= 0) {
+                billError.style.display = 'block';
+                billInput.style.borderColor = '#e74c3c';
+                return false;
+            } else {
+                billError.style.display = 'none';
+                billInput.style.borderColor = '#e1e5e9';
+                return true;
+            }
+        }
+        
+        function validatePeople() {
+            if (peopleInput.value === '' || parseInt(peopleInput.value) <= 0) {
+                peopleError.style.display = 'block';
+                peopleInput.style.borderColor = '#e74c3c';
+                return false;
+            } else {
+                peopleError.style.display = 'none';
+                peopleInput.style.borderColor = '#e1e5e9';
+                return true;
+            }
+        }
+        
+        // Format Rupiah currency
+        function formatRupiah(amount) {
+            return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
+        }
+        
+        // Calculate results
+        function calculateResults() {
+            const billValid = validateBill();
+            const peopleValid = validatePeople();
+            
+            if (!billValid || !peopleValid || (!selectedTax && customTaxInput.value === '')) {
+                resetButton.disabled = true;
+                return;
+            }
+            
+            const bill = parseFloat(billInput.value);
+            const people = parseInt(peopleInput.value);
+            const taxPercentage = selectedTax / 100;
+            
+            const taxAmount = (bill * taxPercentage) / people;
+            const totalPerPerson = (bill / people) + taxAmount;
+            
+            taxAmountElement.textContent = formatRupiah(taxAmount);
+            totalPerPersonElement.textContent = formatRupiah(totalPerPerson);
+            
+            resetButton.disabled = false;
+        }
+        
+        // Initialize validation on page load
+        validateBill();
+        validatePeople();
+    </script>
+</body>
+</html>
